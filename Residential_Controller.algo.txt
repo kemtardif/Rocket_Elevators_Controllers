@@ -1,0 +1,170 @@
+/// Define Objects////
+
+DEFINE 
+
+elevatorA, elevatorB USING floor AND direction AND door AND select AND QUEUE
+    Floor : floor;
+    Direction : direction ;
+    Door : door;
+    Select : {};
+    QUEUE : {};
+
+column AS ARRAY [elevatorA, elevatorB];
+
+FOR EACH floor of building
+    FOR BOTH directions
+     button USING floor AND direction
+        Floor : floor;
+        Direction : direction;
+
+calledButtons AS EMPTY ARRAY 
+      
+END DEFINE
+
+FUNCTION elevator.move 
+             IF (elevator.Direction IS up AND elevator.floor IS NOT 10 )
+                INCREMENT elevator.floor by one
+            ELSE IF (elevator.Direction IS down AND elevator.floor is not zero )
+                INCREMENT elevator.floor by minus one
+            
+
+FUNCTION elevator.open 
+            SET elevator.Door TO open
+
+FUNCTION elevator.close 
+            SET elevator.Door TO close
+
+FUNCTION elevator.select(n)
+            PUSH n to elevator.select
+            IF (n > elevator.floor)
+                SET elevator.Direction TO up
+            ELSE IF (elevator.floor > n)
+                SET elevator.Direction TO down
+
+FUNCTION elevator.checkfloor
+            IF (elevator.floor = ANY elevator.Select OR ANY button.Floor in QUEUE)
+                Elevator stops at floor
+                elevator.open for 5 seconds
+                SENSOR for movement in doorframe
+                    IF no movement for 5 seconds
+                        elevator.close
+                    END IF
+                REMOVE that value in elevator.Select or button in QUEUE
+            END IF
+            IF (elevator.Select OR elevator.QUEUE is empty)
+                SET elevator.Direction TO idle
+            ELSE IF 
+            END IF
+
+FUNCTION callButtons.makeCall(n, direction)
+            SET callButtons[n].Select TO direction
+            RETURN callButtons[n]
+
+FUNCTION column.choose(button)
+
+        IF both elevators are idle 
+            Closest to button is selected
+        ELSE IF one elevator is moving and one is idle
+            CASE
+                Up call
+                    IF elevator.Direction = up AND button.Floor > elevator.Floor
+                     Up elevator is selected
+                    ELSE
+                        Idle elevator is selected
+                    END IF
+                Down call
+                    If elevator.Direction = down AND button.floor < elevator.Floor
+                        Down elevator is selected
+                    ELSE
+                        Idle elevator is selected
+                    END IF
+            END CASE
+        ELSE IF both elevators are moving
+            CASE
+                Up call
+                    IF
+                        elevator.Direction is up AND button.Floor > elevator.Floor
+                Elevators go in opposite directions and towards up call
+                   Up elevator is selected
+                Elevators go in opposite directions and one towards up call
+                    IF
+                        Up elevator go towards up call
+                            Up elevator is selected
+                    ELSE IF    
+                        Down elevator go towards up call
+                            DO NOTHING
+                    END IF
+                Elevators go in same direction and towards up call
+                    IF
+                        Both elevators go up
+                            Closest elevator is selected
+                    ELSE IF
+                        Both elevators go down
+                            DO NOTHING
+                    END IF
+                Elevators go in same direction and away from  up call 
+                    DO NOTHING
+                Elevators go in same direction and one towards up call
+                    Elevator moving towards the call is selected
+                Elevators go in opposite directions and towards down call
+                    Down elevator is selected
+                Elevators go in opposite directions and one towards down call
+                    Elevator moving towards the call is selected
+                Elevators go in same direction and towards down call
+                    Closest one is selected
+                Elevators go in same direction and away from down call 
+                    Furthest from call is selected
+                Elevators go in same direction and one towards down call
+                    Elevator moving towards the call is selected
+            END CASE
+        END IF
+                
+        PUSH button in selected column.elevator.QUEUE
+
+        RETURN selected elevator
+
+FUNCTION column.move
+            RUN elevatorA.move
+            RUN elevatorB.move
+            RUN elevatorA.checkfloor
+            RUN elevator.checkfloor
+
+///MAKE A QUEUE OF CALLS/////////
+IF call button at a floor n with given direction is pressed
+        IF button(n, direction) is not in callbuttons
+            PUSH button(n, direction) in callButtons
+        END IF
+END IF
+
+/////COLUMN LISTEN TO QUEUE AND SELECT ELEVATOR/////
+
+FOR EACH button in callButtons
+    RUN column.choose(button)
+    Push button in column.choose(button).QUEUE
+    REMOVE button from callButtons
+END FOR
+    
+////SELECTING DESTINATION //////
+
+If floor selection button to floor m is pressed
+    RUN elevator.Select(m)
+END IF
+
+/////ELEVATORS ANSWER CALLS
+
+REPEAT
+    RUN Column.move
+UNTIL elevator.select AND elevator.QUEUE are not empty
+    SET elevator.direction to idle
+
+
+
+
+
+
+
+
+
+
+
+
