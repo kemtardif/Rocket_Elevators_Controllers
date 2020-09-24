@@ -23,9 +23,9 @@ END DEFINE
 
 FUNCTION elevator.move 
              IF elevator.Direction = up AND elevator.floor is not 10 THEN
-                    INCREMENT elevator.floor by one
+                    INCREMENT elevator.Floor by one
             ELSE IF elevator.Direction = down AND elevator.floor is not 1 THEN
-                    INCREMENT elevator.floor by minus one
+                    DECREMENT elevator.Floor by minus one
             END IF
 END FUNCTION
             
