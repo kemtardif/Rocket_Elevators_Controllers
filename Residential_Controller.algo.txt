@@ -2,7 +2,7 @@
 
 DEFINE 
 
-elevatorA, elevatorB USING floor AND direction AND door AND on
+elevatorA, elevatorB USING floor AND direction AND door AND on AND 
     Floor : floor
     Direction : direction 
     Door : door
@@ -11,195 +11,209 @@ elevatorA, elevatorB USING floor AND direction AND door AND on
 
 column SET to list [elevatorA, elevatorB];
 
-FOR EACH floor of building
+FOR EACH floors of building
     FOR BOTH directions
      button USING floor AND direction
         Floor : floor
         Direction : direction
+    END FOR
+END FOR
 
 calledButtons SET to empty list
       
 END DEFINE
 
-FUNCTION elevator.move 
-             IF elevator.Direction = up AND elevator.floor is not 10 THEN
-                    INCREMENT elevator.Floor by one
-            ELSE IF elevator.Direction = down AND elevator.floor is not 1 THEN
-                    DECREMENT elevator.Floor by minus one
-            END IF
-END FUNCTION
+SEQUENCE elevator.move 
+
+    IF elevator.Direction is up AND elevator.floor is not 10 THEN
+        INCREMENT elevator.Floor by one
+    ELSE IF elevator.Direction is down AND elevator.floor is not 1 THEN
+        INCREMENT elevator.Floor by minus one
+     END IF
+
+END SEQUENCE
             
 
-FUNCTION elevator.open 
-            SET elevator.Door to open
-END FUNCTION
+SEQUENCE elevator.open 
 
-FUNCTION elevator.close 
-            SET elevator.Door to close
-END FUNCTION
+    SET elevator.Door to open
 
-FUNCTION elevator.select(n)
-            ADD n to elevator.Queue
-            IF elevator.Direction is idle THEN
-                    IF n > elevator.Floor THEN
-                            SET elevator.Direction to up
-                    ELSE IF elevator.Floor > n THEN
-                            SET elevator.Direction to down
-                    END IF
-            END IF
-END FUNCTION
+END SEQUENCE
 
-FUNCTION elevator.checkfloor
-        FOR EACH item IN elevator.Queue
-            IF 
-                elevator.floor = item THEN
-                    Elevator stops at floor
-                    elevator.open
-                    SENSOR for movement in doorframe
-                        IF no movement for 5 seconds THEN
-                            elevator.close
-                        END IF
-                REMOVE item IN elevator.Queue
-            END IF
-        END FOR
+SEQUENCE elevator.close 
 
-        IF elevator.Queue is not empty THEN
-            GET maximum value of item IN elevator.Queue
-            GET minimum value of item IN elevator.Queue
+    SET elevator.Door to close
+
+END SEQUENCE
+
+SEQUENCE elevator.select USING number n
+    ADD n to elevator.Queue
+    IF elevator.Direction is idle THEN
+        IF n greater than elevator.Floor THEN
+             SET elevator.Direction to up
+        ELSE IF n smaller than elevator.Floor THEN
+            SET elevator.Direction to down
         END IF
+    END IF
 
-            IF elevator.Queue is empty THEN
-                    SET elevator.Direction TO idle
-            ELSE IF elevator.Direction = up AND elevator.Floor > maximum value THEN
-                    SET elevator.Direction TO Down
-            ELSE IF elevator.Direction = down AND elevator.Floor < minimum value THEN
-                    SET elevator.Direction TO up
-            END IF
-END FUNCTION
+SEQUENCE
 
-FUNCTION column.choose(button)
+SEQUENCE elevator.checkfloor
 
-        IF both elevators are idle THEN 
-            SEQUENCE
-                GET elevator closest to button
-                ADD button.Floor IN elevator.Queue
-                SET elevator.Direction towards button.Floor
-                REMOVE button IN calledButtons
-            END SEQUENCE
-        ELSE IF one elevator is moving and one is idle THEN
-
-                CASE button.Direction OF
-                    button.Direction = up :
-                        IF elevator.Direction = up AND button.Floor > elevator.Floor THEN
-                            SEQUENCE
-                                GET up elevator
-                                ADD button.Floor IN elevator.Queue
-                                REMOVE button IN calledButtons
-                            END SEQUENCE
-                        ELSE
-                            SEQUENCE
-                                GET idle elevator
-                                ADD button.Floor IN elevator.Queue
-                                SET elevator.Direction towards button.Floors
-                                REMOVE button IN calledButtons
-                            END SEQUENCE
-                        END IF
-                    button.Direction = down :
-                        IF elevator.Direction = down AND button.floor < elevator.Floor THEN
-                            SEQUENCE
-                                GET down elevator
-                                ADD button.Floor IN selected elevator.Queue
-                                REMOVE button IN calledButtons
-                            END SEQUENCE
-                        ELSE
-                            SEQUENCE
-                                GET idle elevator
-                                ADD button.Floor IN selected elevator.Queue
-                                SET selected elevator.Direction towards button.Floors
-                                REMOVE button IN calledButtons
-                            END SEQUENCE
-                        END IF
-                END CASE
-        ELSE IF both elevators are moving up THEN
-            IF button.Direction = up THEN
-                    IF button.Floor > elevator.Floor for both elevators THEN
-                        SEQUENCE
-                            GET closest elevator
-                            ADD button.Floor IN elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
-                    ELSE IF button.Floor > elevator.Floor for one elevator THEN
-                        SEQUENCE
-                            GET this elevator
-                            ADD button.Floor IN selected elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
+    FOR EACH item IN elevator.Queue
+        IF 
+            elevator.floor equals item THEN
+                Elevator stops at floor
+                elevator.open
+                READ for movement in doorframe
+                    IF no movement for 5 seconds THEN
+                        elevator.close
                     END IF
-            END IF
-        ELSE IF both elevators are moving down THEN
-            IF button.Direction = down THEN
-                     IF button.Floor < elevator.Floor for both elevators THEN
-                        SEQUENCE
-                            GET closest elevator
-                            ADD button.Floor IN selected elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
-                    ELSE IF button.Floor < elevator.Floor for one elevator THEN
-                        SEQUENCE
-                            GET this elevator
-                            ADD button.Floor IN selected elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
-                    END IF
-            END IF
-        ELSE IF elevators are moving in opposite direction THEN
-            CASE button.Direction OF
-                button.Direction = up :
-                    IF elevator.Direction is up AND button.Floor > elevator.Floor THEN
-                        SEQUENCE
-                            GET up elevator
-                            ADD button.Floor IN selected elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
-                    END IF
+            REMOVE item IN elevator.Queue
+        END IF
+    END FOR
 
-                button.Direction = down :
-                    IF elevator.Direction is down AND button.Floor < elevator.Floor THEN
-                        SEQUENCE
-                            GET down elevator
-                            ADD button.Floor IN elevator.Queue
-                            REMOVE button IN calledButtons
-                        END SEQUENCE
-                    END IF
+    IF elevator.Queue is not empty THEN
+        GET maximum value of item IN elevator.Queue
+        GET minimum value of item IN elevator.Queue
+    END IF
+
+    IF elevator.Queue is empty THEN
+        GET elevator.Direction TO idle
+    ELSE IF elevator.Direction is up AND elevator.Floor greater than maximum value THEN
+        SET elevator.Direction TO Down
+    ELSE IF elevator.Direction is down AND elevator.Floor smaller than minimum value THEN
+        SET elevator.Direction TO up
+    END IF
+
+END SEQUENCE
+
+SEQUENCE column.choose USING button
+
+    IF both elevators are idle THEN 
+        GET elevator closest to button
+        ADD button.Floor IN elevator.Queue
+        SET elevator.Direction towards button.Floor
+        REMOVE button IN calledButtons
+    ELSE IF one elevator is moving and one is idle THEN
+
+         CASE button.Direction OF
+            button.Direction is up :
+                IF elevator.Direction is up AND button.Floor greater than elevator.Floor THEN
+                    GET up elevator
+                    ADD button.Floor IN elevator.Queue
+                    REMOVE button IN calledButtons
+                 ELSE
+                    GET idle elevator
+                    ADD button.Floor IN elevator.Queue
+                    SET elevator.Direction towards button.Floors
+                    REMOVE button IN calledButtons
+                END IF
+            button.Direction is down :
+                IF elevator.Direction is down AND button.floor smaller than elevator.Floor THEN
+                    GET down elevator
+                    ADD button.Floor IN selected elevator.Queue
+                    REMOVE button IN calledButtons
+                ELSE
+                    GET idle elevator
+                    ADD button.Floor IN selected elevator.Queue
+                    SET selected elevator.Direction towards button.Floors
+                    REMOVE button IN calledButtons
+                END IF
             END CASE
-        END IF
-END FUNCTION
 
-FUNCTION column.move
+    ELSE IF both elevators are moving up THEN
+        IF button.Direction is up THEN
+            IF button.Floor greater than elevator.Floor for both elevators THEN
+                GET closest elevator
+                ADD button.Floor IN elevator.Queue
+                REMOVE button IN calledButtons
+            ELSE IF button.Floor greater than elevator.Floor for one elevator THEN
+                GET this elevator
+                ADD button.Floor IN selected elevator.Queue
+                REMOVE button IN calledButtons
+            END IF
+        END IF
+
+    ELSE IF both elevators are moving down THEN
+        IF button.Direction is down THEN
+            IF button.Floor smaller than elevator.Floor for both elevators THEN
+                GET closest elevator
+                ADD button.Floor IN selected elevator.Queue
+                REMOVE button IN calledButtons
+            ELSE IF button.Floor smaller than elevator.Floor for one elevator THEN
+                GET this elevator
+                ADD button.Floor IN selected elevator.Queue
+                REMOVE button IN calledButtons
+            END IF
+        END IF
+
+    ELSE IF elevators are moving in opposite direction THEN
+
+        CASE button.Direction OF
+            button.Direction is up :
+                 IF elevator.Direction is up AND button.Floor greater than elevator.Floor THEN
+                    GET up elevator
+                    ADD button.Floor IN selected elevator.Queue
+                    REMOVE button IN calledButtons
+                END IF
+
+            button.Direction is down :
+                IF elevator.Direction is down AND button.Floor smaller than elevator.Floor THEN
+                    GET down elevator
+                    ADD button.Floor IN elevator.Queue
+                    REMOVE button IN calledButtons
+                END IF
+        END CASE
+    END IF
+
+END SEQUENCE
+
+SEQUENCE column.move
+
             CALL elevatorA.move
             CALL elevatorB.move
             CALL elevatorA.checkfloor
             CALL elevator.checkfloor
-END FUNCTION
-   
 
-/////ELEVATORS ANSWER CALLS //////////
+END SEQUENCE
 
-WHILE elevatorA.Status AND elevatorB.Status are on
-    IF call button is pressed THEN
-        ADD button IN calledButtons
+SEQUENCE elevator.Rest USING number n
+
+    IF elevator.Direction is idle for x amount of time THEN
+        ADD n to elevator.Queue
+        IF elevator.Floor is smaller than n THEN
+            SET elevator.Direction to up
+        ELSE IF elevator.Floor is greater than n THEN
+            SET elevator.Direction to down
+        END IF
     END IF
 
-    WHILE calledButtons is not empty
+END SEQUENCE
+            
+   
+
+/////ELEVATORS DO THEIR WORK //////////
+
+WHILE elevatorA.Status AND elevatorB.Status are on
+
+    IF floor button is pressed THEN    ////Calls from floors
+        ADD button to calledButtons
+    END IF
+
+    WHILE calledButtons is not empty        /////Dispatch the calls
         FOR EACH buttons in calledButtons
-            CALL column.choose(button)
+            CALL column.choose WITH button
         END FOR
     END WHILE
 
-    CALL Column.move
+    CALL elevatorA.Rest WITH RC ////SET elevator to given floors after a while
+    CALL elevatorB.Rest WITH 5  /////
 
-    IF floor selection button of elevator to floor m is pressed THEN
-        CALL elevator.Select(m)
+    CALL Column.move      ////Make everything move
+
+    IF selection button in elevator to floor m is pressed THEN   /////Calls from selection pannel in elevator
+        CALL elevator.Select WITH number m
     END IF
 
 END WHILE
