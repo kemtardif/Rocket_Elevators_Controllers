@@ -46,9 +46,8 @@ DEFINE
     interfaceRC USING  display
         Display : display //Display which elevator and column to take///
 
-    FOR floors in building excluding RC
-        button USING status and floor
-            Status : status
+    FOR floor in building excluding RC 
+        button USING floor
             Floor : floor
     END FOR
 
@@ -56,9 +55,9 @@ END DEFINE
 
 //////DECLARE SEQUENCES ///////
 
-/////NOTE that the quantity L/N = (floors excluding basements)/(# of elevators in each column)
+/////NOTE that the quantity F/L = (floors excluding basements)/(# of columns above ground)
 ///// is the number of floors deserved by each columns. If this number is not an integer, we can let
-/////all columns except one serve (next integer smaller than L/N) floors, and let the remaining
+/////all columns except one serve (next integer smaller than F/L) floors, and let the remaining
 ////column serves the remaining floors. In all cases, this doesn't change the following logic by.
 
 
@@ -147,12 +146,12 @@ SEQUENCE battery.dispatchCall USING button
     
         IF button.Floor is a basement THEN
             CALL columnBasement.select WITH button
-        IF button.Floor is in the interval [2, L/N] THEN
+        IF button.Floor is in the interval [2, F/L] THEN
             CALL columnA.select WITH button
-        ELSE IF button.Floor is in the interval [(L/N)+1, 2L/N] THEN
+        ELSE IF button.Floor is in the interval [(F/L)+1, 2F/L] THEN
             CALL columnB.select WITH button
-        ELSE IF button.floor is in the interval [(2L/N)+1, 3L/N] THEN
-            CALL columnB.select WITH button
+        ELSE IF button.floor is in the interval [(2F/L)+1, 3F/L] THEN
+            CALL columnC.select WITH button
         ...
         END IF
     
@@ -164,11 +163,11 @@ SEQUENCE interfaceRC.select USING number n
 
     IF n is either B1, B2, ... THEN
         GET columnBasement
-    IF n is in the interval [2, L/N] THEN
+    IF n is in the interval [2, F/L] THEN
         GET columnA
-    ELSE IF n is in the interval [(L/N)+1, 2L/N] THEN
+    ELSE IF n is in the interval [(F/L)+1, 2F/L] THEN
         GET columnB
-    ELSE IF n is in the interval [(2L/N+1), 3L/N] THEN
+    ELSE IF n is in the interval [(2F/L)+1, 3F/L] THEN
         GET columnC
     ...
     END IF
@@ -335,17 +334,28 @@ SEQUENCE elevatorLN.checkFloors USING elevatorLN.Floor
         END FOR
 
     IF elevatorLN.Floor is RC THEN
+        Elevator stops at floor
+        elevatorLN.open
+        READ for movement in doorframe
+            IF no movement for 5 seconds THEN
+                elevatorLN.close
+            END IF
         If elevatorLN.QueueUP is empty THEN      
             SET elevatorLN.Direction to Idle    //Ensure elevator stop at RC if there's no call and go up otherwise///
         ELSE
             SET elevatorLN.Direction to up      //Ensure elevator goes up to respond to the interfaceRC call//
+            Remove columnL and elevatorLN from interfaceRC.Display ///Update InterfaceRC///
     END IF
 
     IF both elevatorLN.Queue AND elevatorLN.QueueUp are empty THEN  //Ensure elevator stop going up if no more calls//
         IF elevatorLN.Direction is up THEN
             SET elevatorLN.Direction TO idle
+        ELSE IF elevatorLN.Direction is down and elevator.Floor is RC THEN
+            SET elevator.Direction to idle
         END IF
     END IF
+
+    
 
 END SEQUENCE
 
@@ -354,14 +364,13 @@ END SEQUENCE
 SEQUENCE elevatorBaseN.checkFloors USING elevatorBaseN.Floor
 
     FOR EACH item IN elevatorBaseN.Queue
-            IF 
-                elevatorBaseN.floor equals item THEN
-                    Elevator stops at floor
-                    elevatorBaseN.open
-                    READ for movement in doorframe
-                        IF no movement for 5 seconds THEN
-                            elevatorBaseN.close
-                        END IF
+            IF elevatorBaseN.floor equals item THEN
+                Elevator stops at floor
+                elevatorBaseN.open
+                READ for movement in doorframe
+                    IF no movement for 5 seconds THEN
+                        elevatorBaseN.close
+                    END IF
                 REMOVE item IN elevatorBaseN.Queue
                     IF elevatorBaseN.Direction is down THEN
                         SET elevatorBaseN.Direction to up
@@ -370,27 +379,36 @@ SEQUENCE elevatorBaseN.checkFloors USING elevatorBaseN.Floor
         END FOR
 
     FOR EACH item IN elevatorBaseN.QueueDown
-            IF 
-                elevatorBaseN.floor equals item THEN
-                    Elevator stops at floor
-                    elevatorBaseN.open
-                    READ for movement in doorframe
-                        IF no movement for 5 seconds THEN
-                            elevatorBaseN.close
-                        END IF
+            IF elevatorBaseN.floor equals item THEN
+                Elevator stops at floor
+                elevatorBaseN.open
+                READ for movement in doorframe
+                    IF no movement for 5 seconds THEN
+                        elevatorBaseN.close
+                    END IF
                 REMOVE item IN elevatorBaseN.QueueDown
             END IF
-        END FOR
+    END FOR
 
    IF elevatorBaseN.Floor is RC THEN
+        Elevator stops at floor
+        elevatorBaseN.open
+        READ for movement in doorframe
+            IF no movement for 5 seconds THEN
+                elevatorBaseN.close
+            END IF
         If elevatorBaseN.QueueDown is empty THEN
             SET elevatorBaseN.Direction to Idle
         ELSE
             SET elevatorBaseN.Direction to down
+            REMOVE columnBasement and elevatorBaseN from interfaceRC.Display ///Update InterfaceRC///
+        END IF
     END IF
 
     IF both elevatorBaseN.Queue AND elevatorBaseN.QueueDown are empty THEN
             SET elevatorBaseN.Direction TO idle
+    ELSE IF elevatorBaseN.Direction is up and elevator.Floor is RC THEN
+            SET elevatorBaseN.Direction to idle
     END IF
 
 
@@ -469,6 +487,116 @@ FOR EACH elevator
 
     END WHILE
 END FOR
+
+
+/////TEST WITH SCENARIO 3/////////////
+
+///Initial Values: F = 60, L = 3, so each columns deserve 20 floors
+//So that columnA is the above columnBasement, columnB is the above columnA, and so forth
+///ElevatorD1.Floor = 58, elevatorD1.Direction is down, Queue and QueueUP are empty
+///...D2.Floor is 50, ..D2.Direction is up, Queue is empty, Queup up contain 60
+///...D3.Floor is 46, ..D3.Direction up, Queue is empty, QueueUp contain 58
+///..D4.Floor is RC, ..D4.Direction is up, Queue is empty, QueueUP contain 54
+///...D5.Floor is 60, ..D5.DIrection is down, Queue and QueueUP are empty
+
+
+*Start While Loop*
+*A call at floor 54 is made*
+
+ADD button with button.Floor = 54 to calledButtons list
+CALL battery.Dispatch WITH this button
+    GET button.Floor 
+    Since 54 is in the interval [40,60], 
+        CALL columnD.select WITH button having button.Floor = 54
+                FOR N = 1, 2, 3, 4, 5
+                    CHECK for elevatorDN with elevatorDN.Floor above 54 and going down
+                        BOTH D1 AND D5 are selected
+                    CHECK distance of both from 54
+                        D1 is closer
+                        ADD 54 to elevatorD1.Queue
+                        REMOVE button from calledButtons list
+
+FOR EACH elevator CALL elevator.Rest 
+    Do nothing since no elevator is idle
+
+CALL battery.move
+    Elevators move up or down if possible
+    Change their display to current floor
+    CALL elevator.checkFloors
+        Do nothing for now
+
+CALL remainingCalls
+    DO nothing for now
+
+CONTINUE Loop and make things move
+
+*When elevatorD1.Floor reach floor 54, 
+
+elevatorD1.checkFloors :
+
+elevatorD1.Floor = elevator.Queue
+    Open door, wait, close door
+    REMOVE 54 from elevatorD1.Queue
+    Won't change direction
+
+CONTINUE LOOP until elevatorD1.Floor is RC
+
+Then by elevatorsD1.checkfloors, 
+    since elevatorD1.FLoor is RC,
+    Open, wait and close door
+    since both queue and queue up are empty and elevatorD1.Floor is RC,
+    SET elevatorD1.Direction to Idle
+
+*Voila! Person arrived at destination!*
+
+////ADDITIONAL REQUIREMENTS///////
+
+///Logic of prioritization of elevators is already taken care of in the algorithm/////
+
+/////Logic back to the origin//////
+
+///Is it better to have a lift waiting on the ground floor?///
+Already implemented above
+
+///Safety logic///
+//Routines checking system status before using them////
+
+ADD properties Sensor : online AND SensorStatus : working TO elevators  ///Will diagnose for any problem///
+
+IF elevator.Sensor is offline THEN                //Ensure the elevator stops if sensor is off//
+    IF elevator.Direction is idle THEN
+        CALL elevator.open
+        SET elevator.Display to warning message
+        SET elevator.Status to off
+    ELSE
+        Elevator stops at next floor
+        CALL elevator.open
+        EMPTY elevator.Queue AND elevator.QueueUp (or.QueueDown)
+        Set elevator.Display to warning message
+        Set elevator.Status to off
+    END IF
+ELSE
+
+
+IF elevator.Sensor is online AND detect a problem THEN   //Stop elevator if a problem is diagnosed///
+    SET SensorStatus to not working
+    IF elevator.Direction is idle THEN
+        CALL elevator.open
+        SET elevator.Display to warning message
+        SET elevator.Status to off
+    ELSE
+        Elevator stops at next floor
+        CALL elevator.open
+        EMPTY elevator.Queue AND elevator.QueueUp (or.QueueDown)
+        Set elevator.Display to warning message
+        Set elevator.Status to off
+    END IF
+ELSE
+
+///Temporal Logic /////
+
+
+
 
 
 

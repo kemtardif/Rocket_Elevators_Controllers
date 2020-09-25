@@ -79,11 +79,11 @@ SEQUENCE elevator.checkfloor
     END IF
 
     IF elevator.Queue is empty THEN
-        GET elevator.Direction TO idle
+        SET elevator.Direction TO idle
     ELSE IF elevator.Direction is up AND elevator.Floor greater than maximum value THEN
-        SET elevator.Direction TO Down
+        SET elevator.Direction TO Down ///Ensure that elevator collect down calls if there's no more call above
     ELSE IF elevator.Direction is down AND elevator.Floor smaller than minimum value THEN
-        SET elevator.Direction TO up
+        SET elevator.Direction TO up ///Ensure that elevator collect up calls if there's no more call below
     END IF
 
 END SEQUENCE
@@ -218,6 +218,66 @@ WHILE elevatorA.Status AND elevatorB.Status are on
     END IF
 
 END WHILE
+
+///TEST WITH SCENARIO 2/////
+
+//elevatorA.Direction is idle, elevatorA.Floor is 10, Queue is empty
+//elevatorB.Direction is idle, elevator.Floor is 3, Queue is empty
+
+*Start loop*
+*A call is made on floor 1 to go up*
+
+ADD button with floor 1 and direction up to calledButtons
+
+Since calledButtons is not empty,
+CALL column.choose with above button : 
+
+    First Check is true, both elevators are idle
+    GET elevatorB since it's closest to floor 1
+    ADD this button.Floor = 1 to elevatorB.Queue
+    SET elevatorB.Direction to down (towards floor 1)
+    REMOVE button from calledButtons
+
+CALL elevator.Rest, which do nothing for now
+
+CALL column.move    
+    Since elevatorA.Direction is idle, it doesn't move
+    ElevatorB goes down one floor and elevatorB.Floor is now 2
+    elevatorA.CheckFloors and elevatorB.checkFloors does nothing for now
+
+*LOOP again, which only changes elevatorB.Floor to 1*
+    Now when elevatorB.checkFloors is called
+        elevatorB.Floor equals elevator.Queue 1 so,
+            open door, wait and close door
+            Remove 1 from elevator.Queue
+            Since Queue is now empty, set elevatorB.Direction to idle
+
+*A select call is made in elevator B to floor 6 *
+
+CALL elevatorB.select USING 6
+    ADD 6 to elevatorB.Queue
+        Since elevatorB is idle and below 6,
+        SET elevatorB.Direction to up
+
+*LOOPS where nothing happen except elevatorB goin up, until elevatorB.Floor is 6*
+
+    Now when elevatorB.checkFloors is called
+        elevatorB.Floor equals elevatorB.Queue of 6,
+            open, wait and close door
+            Remove 6 from Queue
+            Since Queue is now empty, set elevatorB.Direction to idle
+
+*LOOPS for 2 minutes, where elevator.Rest does nothing since it activate after 5 minutes*
+
+*A call is made on floor 3 going up*
+    By the same process, since both elevators are idle and B is closest, it is selected.
+    Repeat the exact same steps as above
+
+For the third call at floor 9, going down, it is now A that is closest, hence it is choose
+    The next steps are identical as above, but for elevatorA
+
+END
+
 
 
 
