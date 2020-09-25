@@ -25,9 +25,9 @@ END DEFINE
 
 SEQUENCE elevator.move 
 
-    IF elevator.Direction is up AND elevator.floor is not 10 THEN
+    IF elevator.Direction is up AND elevator.floor is not top floor THEN
         INCREMENT elevator.Floor by one
-    ELSE IF elevator.Direction is down AND elevator.floor is not 1 THEN
+    ELSE IF elevator.Direction is down AND elevator.floor is not lowest floor THEN
         INCREMENT elevator.Floor by minus one
      END IF
 
@@ -90,34 +90,35 @@ END SEQUENCE
 
 SEQUENCE column.choose USING button
 
-    IF both elevators are idle THEN 
+    IF both elevators are idle THEN     //Select closest idle elevator ///
         GET elevator closest to button
         ADD button.Floor IN elevator.Queue
         SET elevator.Direction towards button.Floor
         REMOVE button IN calledButtons
+
     ELSE IF one elevator is moving and one is idle THEN
 
          CASE button.Direction OF
             button.Direction is up :
                 IF elevator.Direction is up AND button.Floor greater than elevator.Floor THEN
                     GET up elevator
-                    ADD button.Floor IN elevator.Queue
+                    ADD button.Floor IN elevator.Queue  //Select elevator going up towards call first///
                     REMOVE button IN calledButtons
                  ELSE
                     GET idle elevator
-                    ADD button.Floor IN elevator.Queue
+                    ADD button.Floor IN elevator.Queue  //Select Idle elevator second///
                     SET elevator.Direction towards button.Floors
                     REMOVE button IN calledButtons
                 END IF
             button.Direction is down :
                 IF elevator.Direction is down AND button.floor smaller than elevator.Floor THEN
                     GET down elevator
-                    ADD button.Floor IN selected elevator.Queue
+                    ADD button.Floor IN selected elevator.Queue //Select elevator goin down towards call first//
                     REMOVE button IN calledButtons
                 ELSE
                     GET idle elevator
                     ADD button.Floor IN selected elevator.Queue
-                    SET selected elevator.Direction towards button.Floors
+                    SET selected elevator.Direction towards button.Floors  //Select idle elevator second//
                     REMOVE button IN calledButtons
                 END IF
             END CASE
@@ -126,7 +127,7 @@ SEQUENCE column.choose USING button
         IF button.Direction is up THEN
             IF button.Floor greater than elevator.Floor for both elevators THEN
                 GET closest elevator
-                ADD button.Floor IN elevator.Queue
+                ADD button.Floor IN elevator.Queue 
                 REMOVE button IN calledButtons
             ELSE IF button.Floor greater than elevator.Floor for one elevator THEN
                 GET this elevator
@@ -207,8 +208,8 @@ WHILE elevatorA.Status AND elevatorB.Status are on
         END FOR
     END WHILE
 
-    CALL elevatorA.Rest WITH RC ////SET elevator to given floors after a while
-    CALL elevatorB.Rest WITH 5  /////
+    CALL elevatorA.Rest WITH RC ////Set elevator to given floors after a while
+    CALL elevatorB.Rest WITH 5  
 
     CALL Column.move      ////Make everything move
 

@@ -4,8 +4,8 @@ DEFINE
 
     battery SET to empty list
 
-    columnBasement SET to empty list
-    columnA SET to empty list
+    columnBasement SET to empty list ///Column desrving basements ///
+    columnA SET to empty list  ///Columns deserving upper floors////
     columnB SET to empty list
     ...
 
@@ -14,25 +14,26 @@ DEFINE
             elevatorLN USING floor AND direction AND door AND on AND display
                 Floor : floor
                 Direction : direction  ///UP, DOWN, OR IDLE
-                Queue SET to empty list
-                QueueUP SET to empty list
+                Queue SET to empty list ///Contain calls coming from floors (all going down)
+                QueueUP SET to empty list ///COntains calls coming from RC (all going up)
                 Door : door  //OPEN OR CLOSE
                 Status : on
-                Display : display ///SHOW FLOOR
+                Display : display ///Display current floor//
 
             ADD elevatorLN to columnL
         END FOR
         ADD columnL to battery
     END FOR
 
-    FOR # of elevators in each column N = 1, 2, 3, ...
-        elevatorBaseN USING floor AND direction AND door AND on
+    FOR # of elevators in columnBasement N = 1, 2, 3, ...  ///Assume any # of basements///
+        elevatorBaseN USING floor AND direction AND door AND on AND display
             Floor : floor
             Direction : direction
             Queue SET to empty list
-            QueueUp SET to empty list
+            QueueDown SET to empty list
             Door : door
             Status : on
+            Display : display 
         
         ADD elevatateBaseN to columnBasement
     END FOR
@@ -43,7 +44,7 @@ DEFINE
     interfaceButtons SET to empty list
 
     interfaceRC USING  display
-        Display : display
+        Display : display //Display which elevator and column to take///
 
     FOR floors in building excluding RC
         button USING status and floor
@@ -57,8 +58,8 @@ END DEFINE
 
 /////NOTE that the quantity L/N = (floors excluding basements)/(# of elevators in each column)
 ///// is the number of floors deserved by each columns. If this number is not an integer, we can let
-/////all columns minus the lowest one serve (next integer smaller than L/N) floors, and let the lowest
-////column serves the remaining floors. In all cases, this doesn't change the following logic by much.
+/////all columns except one serve (next integer smaller than L/N) floors, and let the remaining
+////column serves the remaining floors. In all cases, this doesn't change the following logic by.
 
 
 ////Select elevator from a column////
@@ -67,29 +68,29 @@ SEQUENCE columnL.select USING button
 
     FOR # of elevators in each column N = 1, 2, 3, ...
         IF elevatorLN.Floor greater or equal than button.Floor AND elevatorLN.Direction is down THEN
-            GET elevatorLN
+            GET elevatorLN   //Select above elevator goin down first//
         END IF
     END FOR
     IF there's more than one selected elevatorLF THEN
         FOR selected elevators
-            READ distance elevator.Floor to button.Floor
+            READ distance elevatoLN.Floor to button.Floor 
         END FOR
-        GET closest to button.Floor 
+        GET closest to button.Floor     
         ADD button.Floor to elevatorLN.Queue
         REMOVE button from calledButtons
     END IF
 
     FOR # elevators in each column N = 1, 2, 3, ...
         IF elevatorLN.direction is idle THEN
-            GET elevatorLN
+            GET elevatorLN    //Select Idle elevator second//
         END IF
     END FOR
         FOR selected elevators
-            GET distance of elevator.Floor to button.Floor
+            GET distance of elevatorLN.Floor to button.Floor
         END FOR
         GET closest to button.Floor
         ADD button.Floor to elevatorLN.Queue
-            IF elevatorLN.Floor is smaller than button.Floor THEN
+            IF elevatorLN.Floor is smaller than button.Floor THEN  //Change Idle to appropriate direction///
                 SET elevatorLN.Direction to up
              ELSE IF elevatorLN.Floor is greater than button.Floor THEN
                 SET elevatorLN.Direction to down
@@ -99,20 +100,20 @@ SEQUENCE columnL.select USING button
 
 END SEQUENCE
 
-////Select elevator from Basement column////
+////Same logic, but for basements////
 
 SEQUENCE columnBasement.select USING button
 
     FOR # of elevators in each column N = 1, 2, 3, ...
-        IF elevatorBaseN.Floor smaller or qual to button.Floor AND elevatorBaseN.Direction is up THEN
+        IF elevatorBaseN.Floor smaller or equal to button.Floor AND elevatorBaseN.Direction is up THEN
             GET elevatorBaseN
         END IF
     END FOR
-    IF there's more than one selected elevatorBaseF THEN
+    IF there's more than one selected elevatorBaseN THEN
          FOR selected elevators
-            READ absolute value of elevator.Floor minus button.Floor
+            READ distance of elevatorBaseN.Floor to button.Floor
         END FOR
-        GET elevator with smallest absolute value
+        GET closest to button.Floor
         ADD button.Floor to elevatorBaseN.Queue
         REMOVE button from calledButtons
     END IF
@@ -124,9 +125,9 @@ SEQUENCE columnBasement.select USING button
     END FOR
     IF there's more than one selected elevatorBaseN THEN
          FOR selected elevators
-            READ absolute value of elevator.Floor minus button.Floor
+            READ distance of elevatorBaseN.Floor to button.Floor
         END FOR
-        GET elevator with smallest absolute value
+        GET closest to button.Floor
         ADD button.Floor to elevatorBaseN.Queue
             IF elevatorBaseN.Floor is smaller than button.Floor THEN
                 SET elevatorBaseN.Direction to up
@@ -157,7 +158,7 @@ SEQUENCE battery.dispatchCall USING button
     
 END SEQUENCE
 
-///Dispatch calls from RC interface/////
+///Dispatch calls from RC interface, with similar logic for basements and upper floors/////
 
 SEQUENCE interfaceRC.select USING number n
 
@@ -174,83 +175,83 @@ SEQUENCE interfaceRC.select USING number n
 
     IF selected column is columnBasement THEN
 
-        FOR EACH elevators in columnBasement
-            IF elevator.Floor is RC AND elevator.Direction is down THEN
-                GET this elevator
+        FOR EACH elevatorBaseN in columnBasement
+            IF elevatorBaseN.Floor is RC AND elevatorBaseN.Direction is down THEN  
+                GET this elevator    ///Select elevator at RC going down first///
             END IF
             
         END FOR
-            FOR EACH selected elevators
-                GET distance of elevator.Floor to n
+            FOR EACH selected elevatorBaseN
+                GET distance of elevatorBaseN.Floor to n
             END FOR
             GET closest to n
-            Add n to elevator.QueueUp
+            Add n to elevatorBaseN.QueueDown    ///Select elevator that stop closest to called floor///
             SET interfaceRC.Display to display selected elevator and column
             REMOVE n to interfaceButtons
 
-        FOR EACH elevators in selected column
-            IF elevator.Floor is RC AND elevator.Direction is Idle THEN
-                GET this elevator
+        FOR EACH elevators in columnBasement
+            IF elevatorBaseN.Floor is RC AND elevatorBaseN.Direction is Idle THEN
+                GET this elevatorBaseN  //Select idle elevator at RC second///
             END IF
         END FOR
         IF there's more than one selected elevator THEN
             GET random one
-            ADD n to elevator.QueueUp
+            ADD n to elevatorBaseN.QueueUDown    ///Select any of them////
             SET interfaceRC.Display to display selected elevator and column
             REMOVE n to interfaceButtons
         END IF
 
-        FOR elevators in selected column
-            IF elevator.Direction is up
-                GET this elevator
+        FOR elevatorBaseN in columnBasement
+            IF elevatorBaseN.Direction is up
+                GET this elevatorBaseN    //Select up elevator third, which necessarily goes to RC by construction; see below///
             END IF
         END FOR
-            FOR EACH selected elevators
-                GET distance of elevator.Floor to RC
+            FOR EACH selected elevatorBaseN
+                GET distance of elevatorBaseN.Floor to RC
             END FOR
             GET closest to RC
-            ADD n to elevator.QueueUP
+            ADD n to elevatorBaseN.QueueDown
             SET interfaceRC.Display to display selected elevator and column
             REMOVE n to interfaceButtons
 
-    ELSE 
+    ELSE   ///Same logic for upper elevators///
 
-        FOR EACH elevators in selected column
-            IF elevator.Floor is RC AND elevator.Direction is up THEN
-                GET this elevator
+        FOR EACH elevatorLN in selected column
+            IF elevatorLN.Floor is RC AND elevatorLN.Direction is up THEN
+                GET this elevatorLN
             END IF
         END FOR
-            FOR EACH selected elevators
-                GET distance elevator.Floor to n
+            FOR EACH selected elevatorLN
+                GET distance elevatorLN.Floor to n
             END FOR
             GET closest to n
-            Add n to elevator.QueueUp
+            Add n to elevatorLN.QueueUp
             SET interfaceRC.Display to display selected elevator and column
             REMOVE n to interfaceButtons
 
-        FOR EACH elevators in selected column
-            IF elevator.Floor is RC AND elevator.Direction is Idle THEN
-                GET this elevator
+        FOR EACH elevatorLN in selected column
+            IF elevatorLN.Floor is RC AND elevatorLN.Direction is Idle THEN
+                GET this elevatorLN
             END IF
         END FOR
             IF there's more than one selected elevator THEN
                 GET random one
-                ADD n to elevator.QueueUp
+                ADD n to elevatorLN.QueueUp
                 SET interfaceRC.Display to display selected elevator and column
                 REMOVE n to interfaceButtons
-                SET elevator.Direction to up
+                SET elevatorLN.Direction to up
             END IF
 
-        FOR EACH elevators in selected column
-            IF elevator.Direction is down
-                GET this elevator
+        FOR EACH elevatorLN in selected column
+            IF elevatorLN.Direction is down
+                GET this elevatorLN
             END IF
         END FOR
-            FOR EACH selected elevators
-                GET distance from elevator.Floor to RC
+            FOR EACH selected elevatorLN
+                GET distance from elevatorLN.Floor to RC
             END FOR
             GET closest to RC
-            ADD n to elevator.QueueUP
+            ADD n to elevatorLN.QueueUP
             SET interfaceRC.Display to display selected elevator and column
             REMOVE n to interfaceButtons
     END IF
@@ -279,7 +280,7 @@ SEQUENCE elevator.open
 
 END SEQUENCE
 
-////I'll let you guess/////
+////I'll let you gues what it does/////
 
 SEQUENCE elevator.close 
 
@@ -299,7 +300,7 @@ SEQUENCE elevator.move
 
 END SEQUENCE
 
-////Check if call there's a call on a given floor, or if a call is at destination///////
+////Check if there's a call on a given floor, or if a call is at destination///////
 ////Also check what to do if at RC or if there's no more call/////
 
 SEQUENCE elevatorLN.checkFloors USING elevatorLN.Floor
@@ -334,13 +335,13 @@ SEQUENCE elevatorLN.checkFloors USING elevatorLN.Floor
         END FOR
 
     IF elevatorLN.Floor is RC THEN
-        If elevatorLN.QueueUP is empty THEN
-            SET elevatorLN.Direction to Idle
+        If elevatorLN.QueueUP is empty THEN      
+            SET elevatorLN.Direction to Idle    //Ensure elevator stop at RC if there's no call and go up otherwise///
         ELSE
-            SET elevatorLN.Direction to up
+            SET elevatorLN.Direction to up      //Ensure elevator goes up to respond to the interfaceRC call//
     END IF
 
-    IF both elevatorLN.Queue AND elevatorLN.QueueUp are empty THEN
+    IF both elevatorLN.Queue AND elevatorLN.QueueUp are empty THEN  //Ensure elevator stop going up if no more calls//
         IF elevatorLN.Direction is up THEN
             SET elevatorLN.Direction TO idle
         END IF
@@ -368,27 +369,27 @@ SEQUENCE elevatorBaseN.checkFloors USING elevatorBaseN.Floor
             END IF
         END FOR
 
-    FOR EACH item IN elevatorBaseN.QueueUp
+    FOR EACH item IN elevatorBaseN.QueueDown
             IF 
-                elevator.floor equals item THEN
+                elevatorBaseN.floor equals item THEN
                     Elevator stops at floor
                     elevatorBaseN.open
                     READ for movement in doorframe
                         IF no movement for 5 seconds THEN
                             elevatorBaseN.close
                         END IF
-                REMOVE item IN elevatorBaseN.QueueUp
+                REMOVE item IN elevatorBaseN.QueueDown
             END IF
         END FOR
 
    IF elevatorBaseN.Floor is RC THEN
-        If elevatorLN.QueueUP is empty THEN
+        If elevatorBaseN.QueueDown is empty THEN
             SET elevatorBaseN.Direction to Idle
         ELSE
             SET elevatorBaseN.Direction to down
     END IF
 
-    IF both elevatorBaseN.Queue AND elevatorBaseN.QueueUp are empty THEN
+    IF both elevatorBaseN.Queue AND elevatorBaseN.QueueDown are empty THEN
             SET elevatorBaseN.Direction TO idle
     END IF
 
@@ -402,7 +403,7 @@ SEQUENCE battery.move
     FOR # of elevators in each column N = 1, 2, 3, ...
         FOR # of columns L = A, B, C, ...
             CALL elevatorLN.move
-            SET elevatorLM.Display to elevatorLN.Floor
+            SET elevatorLN.Display to elevatorLN.Floor
             CALL elevatorLN.checkFloors USING elevatorLN.Floor
         END FOR
         CALL elevatorBaseN.move
@@ -416,11 +417,11 @@ END SEQUENCE
 
 SEQUENCE elevatorLN.Rest
 
-    IF elevator.Direction is idle for x amount of time THEN
+    IF elevatorLN.Direction is idle for x amount of time THEN
         IF elevatorLN.Floor is not lowest floor deserved by column excluding RC THEN
         ADD lowest floor deserved by column L to elevatorLN.QueueUp
         IF elevatorLN.Floor is RC THEN
-            SET elevator.Direction to up
+            SET elevatorLN.Direction to up
         ELSE IF elevatorLN.Floor is above lowest floor THEN
             SET elevatorLN.Direction to down
         END IF
@@ -434,7 +435,7 @@ SEQUENCE elevatorBaseN.Rest
 
     IF elevatorBaseN.Direction is idle for x amount of time THEN
         IF elevatorBaseN.Floor is not RC THEN
-            ADD RC to elevatorBaseN.QueueUp
+            ADD RC to elevatorBaseN.QueueDown
             SET elevatorBaseN.Direction to up
     END IF
 
@@ -442,7 +443,7 @@ END SEQUENCE
 
 /////ELEVATORS DO THEIR WORK///////////
 
-FOR EACH elevators
+FOR EACH elevator
 
     WHILE elevator.Status is on
 
@@ -460,7 +461,7 @@ FOR EACH elevators
             FOR # of selected columns L = A, B, C, ...      ////// SET elevator to given floors after a while
                 CALL elevatorLN.Rest                        //////
             END FOR
-            CALL elevateBaseN.Rest
+            CALL elevatorBaseN.Rest
         END FOR
 
         CALL battery.move         ////Make everything move
