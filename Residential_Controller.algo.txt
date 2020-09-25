@@ -276,7 +276,80 @@ CALL elevatorB.select USING 6
 For the third call at floor 9, going down, it is now A that is closest, hence it is choose
     The next steps are identical as above, but for elevatorA
 
-END
+///ADDITIONAL REQUIREMENTS ////
+
+///Temporal Logic /////
+
+///Schedule implementation///
+
+                               
+FOR EACH hour of the day 
+    CREATE calledFloorsA, calledFloorsB USING hour AND max  ///Create lists of all floors called at each hour
+        Hour : hour
+        Floors AS empty list
+        Max : max
+
+    FOR EACH button
+        IF  button.Floor is added to elevatorA.Queue THEN
+            Add button.Floor to calledFloorsA.Floors
+        ELSE IF  button.Floor is added to elevatorB.Queue THEN  //Add any called buttons to list
+        END IF
+    END FOR
+END FOR
+    
+FOR EACH calledFloorsA.Hour
+    FOR EACH item in calledFloorsA.Floors
+        CALCULATE number of times each button.Floor appears
+        READ button.Floor with maximum appearance
+        SET calledFloorsA.Max to this button.Floor      //This gives which floor elevatorA deserve the most at each hour
+    END FOR
+END FOR
+
+FOR EACH calledFloorsB.Hour
+    FOR EACH item in calledFloorsB.Floors
+        CALCULATE number of times each button.Floor appears
+        READ button.Floor with maximum appearance
+        SET calledFloorsB.Max to this button.Floor      //This gives which floor elevatorB deserve the most at each hour
+    END FOR
+END FOR
+
+*Now instead of just calling elevator.Rest in the loop, we do below:*
+
+FOR EACH hour the day
+    IF hour THEN
+        GET calledFloorsA with calledFloorsA.Hour equal to hour
+        CALL elevatorA.Rest USING calledFloorsA.Max
+
+        GET calledFloorsA with calledFloorsA.Hour equal to hour
+        CALL elevatorA.Rest USING calledFloorsA.Max           ///Set rest floor to most deserved floor at this hour
+    END IF
+END FOR
+
+////Logic of loading //////
+
+ADD elevator.Weight to elevators properties USING Weight
+    Weight : weight
+
+ *Instead of line 26 "SEQUENCE elevator.move", use the following:*
+ *This will check the weight at every loop*
+ 
+
+SEQUENCE elevator.weightWatcher
+
+    READ elevator.Weight
+    IF elevator.Weight is greater than some amout THEN
+        elevator.open    //Ensure doors are open and elevator stays on current floor
+    ELSE
+        IF elevator.Direction is up AND elevator.floor is not top floor THEN
+            elevator.close    //Ensure doors are closed and go on it's way
+            INCREMENT elevator.Floor by one
+        ELSE IF elevator.Direction is down AND elevator.floor is not lowest floor THEN
+            elevator.close
+            INCREMENT elevator.Floor by minus one
+        END IF
+    END IF
+
+END SEQUENCE
 
 
 

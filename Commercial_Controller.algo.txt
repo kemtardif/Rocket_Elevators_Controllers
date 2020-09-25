@@ -593,7 +593,6 @@ IF elevator.Sensor is online AND detect a problem THEN   //Stop elevator if a pr
     END IF
 ELSE
 
-///Temporal Logic /////
 
 
 
