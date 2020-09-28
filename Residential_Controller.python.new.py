@@ -28,15 +28,7 @@ class Elevator:
             direction1 = self.direction
             print("Elevator " + self.id + " is moving " + direction1 + " and is at floor " + floor1)
 
-    def select(self, n):
-        self.queue.append(n)
-        if self.direction == "idle":
-            if self.floor < n:
-                self.direction = "up"
-            elif self.floor > n:
-                self.direction = "down"
-
-    def selectInElevator(self):
+    def requestFloor(self):
         n = input("Select destination:\n")
         print("You selected floor " + n)
         n = int(n)
@@ -58,12 +50,11 @@ class Elevator:
                 time.sleep(5)
                 print("Doors are now closing")
                 self.close()
-                self.queue.pop()
-                self.selectInElevator()
-
+                self.queue.remove(item)
+                self.requestFloor()
+        
         for item in self.selected:
             if self.floor == item:
-                f = str(self.floor)
                 print("Elevator " + self.id + " arrived at it's destination")
                 self.open()
                 print("Doors open")
@@ -71,7 +62,7 @@ class Elevator:
                 time.sleep(3)
                 print("Doors are now closing")
                 self.close()
-                self.selected.pop()
+                self.selected.remove(item)
 
         if len(self.queue) == 0 and len(self.selected) == 0:
             self.direction = "idle"
@@ -80,162 +71,156 @@ class Button:
     def __init__(self, floor, direction):
         self.floor = floor
         self.direction = direction
+    
+    def findDirection(self, a):
+        if a.floor > self.floor:
+            a.direction = "down"
+        elif a.floor < self.floor:
+            a.direction = "up"
+    
+    def getClosest(self, a, b):
+        absA = math.fabs(a.floor - self.floor)
+        absB = math.fabs(b.floor - self.floor)
+        if absA > absB:
+            b.queue.append(self.floor)
+            calledButtons.pop()
+            print("Elevator B is selected")
+            if b.floor - self.floor > 0:
+                b.direction = "down"
+            elif b.floor-self.floor < 0:
+                b.direction = "up"
+        elif absB > absA:
+            a.queue.append(self.floor)
+            calledButtons.pop()
+            print("Elevator A is selected")
+            if a.floor - self.floor > 0:
+                a.direction = "down"
+            elif a.floor - self.floor < 0:
+                a.direction = "up"
+        else:
+            a.queue.append(self.floor)
+            calledButtons.pop()
+            self.findDirection(a)
 
-fl = list(range(11))
+    def requestElevator(self):
+    
+        if elevatorA.direction == "idle" and elevatorB.direction == "idle":  #Both are idle
+            self.getClosest(elevatorA, elevatorB)
+        elif elevatorA.direction != "idle" and elevatorB.direction == "idle": #A is moving, B is idle
+            if self.direction == "up":
+                if elevatorA.direction == "up" and self.floor > elevatorA.floor:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                else:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+                    self.findDirection(elevatorB)
+            else:
+                if elevatorA.direction == "down" and self.floor < elevatorA.floor:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                else:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+                    self.findDirection(elevatorB)
+        elif elevatorB.direction != "idle" and elevatorA.direction == "idle": #B is moving, A is idle
+            if self.direction == "up":
+                if elevatorB.direction == "up" and self.floor > elevatorB.floor:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected ")
+                    calledButtons.pop()
+                else:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                    self.findDirection(elevatorA)
+            else:
+                if elevatorB.direction == "down" and self.floor < elevatorB.floor:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+                else:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                    self.findDirection(elevatorA)
+    
+        elif elevatorA.direction == "up" and elevatorB.direction == "up" and self.direction == "up": #Both are going up and up call
+                if self.floor > elevatorA.floor and self.floor > elevatorB.floor:
+                    self.getClosest(elevatorA, elevatorB)
+                elif self.floor > elevatorA.floor:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                elif self.floor > elevatorB.floor:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+        elif elevatorA.direction == "down" and elevatorB.direction == "down" and self.direction == "down": #Both are going down and down call
+            if self.floor < elevatorA.floor and self.floor < elevatorB.floor:
+                self.getClosest(elevatorA, elevatorB)
+            elif self.floor < elevatorA.floor:
+                elevatorA.queue.append(self.floor)
+                print("Elevator A is selected")
+                calledButtons.pop()
+            elif self.floor < elevatorB.floor:
+                elevatorB.queue.append(self.floor)
+                print("Elevator B is selected")
+                calledButtons.pop()
+        elif elevatorA.direction != "idle" and elevatorB.direction != "idle" and elevatorA.direction != elevatorB.direction: #Opposite direction
+            if self.direction == "up":
+                if elevatorA.direction == "up" and self.floor > elevatorA.floor:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                elif elevatorB.direction == "up" and self.floor > elevatorB.floor:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+            else:
+                if elevatorA.direction == "down" and self.floor < elevatorA.floor:
+                    elevatorA.queue.append(self.floor)
+                    print("Elevator A is selected")
+                    calledButtons.pop()
+                elif elevatorB.direction == "down" and self.floor < elevatorB.floor:
+                    elevatorB.queue.append(self.floor)
+                    print("Elevator B is selected")
+                    calledButtons.pop()
+
+    def selectAtFloor(self):
+
+        self.floor = input("Select the floor you're at:\n")
+        print(f'You are at floor {self.floor}\n')
+        self.direction = input("Select which direction you are going:\n")
+        print(f'You want to go {self.direction}')
+        self.floor = int(self.floor)
+            
+        calledButtons.append(self)
+        button.requestElevator()
+
 door = ['open', 'close']
 
 elevatorA = Elevator("A", 2, "idle", door[1])
 elevatorB = Elevator("B", 6, "idle", door[1])
-button = Button(fl[0], "idle")
+button = Button(1, "idle")
 
 column = [elevatorA, elevatorB]
 
 calledButtons = []
 
-def getClosest(a, b, Button):
-    absA = math.fabs(a.floor - Button.floor)
-    absB = math.fabs(b.floor - Button.floor)
-    if absA > absB:
-        b.queue.append(Button.floor)
-        calledButtons.pop()
-        print("Elevator B is selected")
-        if b.floor - button.floor > 0:
-            b.direction = "down"
-        elif b.floor-Button.floor < 0:
-            b.direction = "up"
-    elif absB > absA:
-        a.queue.append(Button.floor)
-        calledButtons.pop()
-        print("Elevator A is selected")
-        if a.floor - button.floor > 0:
-            a.direction = "down"
-        elif a.floor-Button.floor < 0:
-            a.direction = "up"
-    else:
-        a.queue.append(Button.floor)
-        calledButtons.pop()
-        findDirection(a,Button)
-
-def findDirection(a, Button):
-    if a.floor > Button.floor:
-        a.direction = "down"
-    elif a.floor < Button.floor:
-        a.direction = "up"
-
-    
-
-def dispatch(Button):
-    
-    if elevatorA.direction == "idle" and elevatorB.direction == "idle":  #Both are idle
-        getClosest(elevatorA, elevatorB, Button)
-    elif elevatorA.direction != "idle" and elevatorB.direction == "idle": #A is moving, B is idle
-        if Button.direction == "up":
-            if elevatorA.direction == "up" and Button.floor > elevatorA.floor:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-            else:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-                findDirection(elevatorB, Button)
-        else:
-            if elevatorA.direction == "down" and Button.floor < elevatorA.floor:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-            else:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-                findDirection(elevatorB, Button)
-    elif elevatorB.direction != "idle" and elevatorA.direction == "idle": #B is moving, A is idle
-        if Button.direction == "up":
-            if elevatorB.direction == "up" and Button.floor > elevatorB.floor:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected ")
-                calledButtons.pop()
-            else:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-                findDirection(elevatorA, Button)
-        else:
-            if elevatorB.direction == "down" and Button.floor < elevatorB.floor:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-            else:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-                findDirection(elevatorA, Button)
- 
-    elif elevatorA.direction == "up" and elevatorB.direction == "up" and Button.direction == "up": #Both are going up and up call
-            if Button.floor > elevatorA.floor and Button.floor > elevatorB.floor:
-                getClosest(elevatorA, elevatorB, Button)
-            elif Button.floor > elevatorA.floor:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-            elif Button.floor > elevatorB.floor:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-    elif elevatorA.direction == "down" and elevatorB.direction == "down" and Button.direction == "down": #Both are going down and down call
-        if Button.floor < elevatorA.floor and Button.floor < elevatorB.floor:
-            getClosest(elevatorA, elevatorB, Button)
-        elif Button.floor < elevatorA.floor:
-            elevatorA.queue.append(Button.floor)
-            print("Elevator A is selected")
-            calledButtons.pop()
-        elif Button.floor < elevatorB.floor:
-            elevatorB.queue.append(Button.floor)
-            print("Elevator B is selected")
-            calledButtons.pop()
-    elif elevatorA.direction != "idle" and elevatorB.direction != "idle" and elevatorA.direction != elevatorB.direction: #Opposite direction
-        if Button.direction == "up":
-            if elevatorA.direction == "up" and Button.floor > elevatorA.floor:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-            elif elevatorB.direction == "up" and Button.floor > elevatorB.floor:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-        else:
-            if elevatorA.direction == "down" and Button.floor < elevatorA.floor:
-                elevatorA.queue.append(Button.floor)
-                print("Elevator A is selected")
-                calledButtons.pop()
-            elif elevatorB.direction == "down" and Button.floor < elevatorB.floor:
-                elevatorB.queue.append(Button.floor)
-                print("Elevator B is selected")
-                calledButtons.pop()
-
 def moveColumn():
-    if len(elevatorA.queue) == 0 and len(elevatorA.selected) == 0:
-            elevatorA.direction = "idle"
-    if len(elevatorB.queue) == 0 and len(elevatorB.selected) == 0:
-        elevatorB.direction = "idle"
+    for item in column:
+        if len(item.queue) == 0 and len(item.selected) == 0:
+                item.direction = "idle"
     for item in column:
         item.move()
         item.checkFloor()
     for item in calledButtons:
-        dispatch(item)
-
-    
-
-def selectAtFloor():
-
-    button.floor = input("Select the floor you're at:\n")
-    print(f'You are at floor {button.floor}\n')
-    button.direction = input("Select which direction you are going:\n")
-    print(f'You want to go {button.direction}')
-    button.floor = int(button.floor)
-        
-    calledButtons.append(button)
-    dispatch(button)
+        item.requestElevator()
 
 #Setting up the scenario
 
@@ -259,7 +244,7 @@ def setup():
     elevatorB.floor = x
     elevatorA.direction = j
     elevatorB.direction = y
-    selectAtFloor()
+    button.selectAtFloor()
 
 setup()
 
@@ -271,7 +256,7 @@ while True:
     if len(elevatorA.queue) == 0 and len(elevatorA.selected) == 0 and len(elevatorB.queue) == 0 and len(elevatorB.selected) == 0:
 
         print("Both elevators are now empty, waiting for another call")
-        selectAtFloor()
+        button.selectAtFloor()
 
 
 
