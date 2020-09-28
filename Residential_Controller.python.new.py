@@ -97,6 +97,7 @@ def getClosest(a, b, Button):
     absB = math.fabs(b.floor - Button.floor)
     if absA > absB:
         b.queue.append(Button.floor)
+        calledButtons.pop()
         print("Elevator B is selected")
         if b.floor - button.floor > 0:
             b.direction = "down"
@@ -104,6 +105,7 @@ def getClosest(a, b, Button):
             b.direction = "up"
     elif absB > absA:
         a.queue.append(Button.floor)
+        calledButtons.pop()
         print("Elevator A is selected")
         if a.floor - button.floor > 0:
             a.direction = "down"
@@ -111,6 +113,7 @@ def getClosest(a, b, Button):
             a.direction = "up"
     else:
         a.queue.append(Button.floor)
+        calledButtons.pop()
         findDirection(a,Button)
 
 def findDirection(a, Button):
