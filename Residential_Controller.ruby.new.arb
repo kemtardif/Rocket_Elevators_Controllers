@@ -1,0 +1,320 @@
+# Define Objects
+
+class Elevator
+    attr_accessor :id, :floor, :direction, :door, :queue, :selected
+    
+    def initialize(id, floor, direction, door)
+        @id = id
+        @floor = floor
+        @direction = direction
+        @door = door
+        @queue = []
+        @selected = []
+    end
+        
+    def open()
+        self.door = "open"
+    end
+
+    def close()
+        self.door = "closed"
+    end
+        
+    def move()
+        if self.direction != "idle"
+            if self.direction == "up" and self.floor < 10
+                self.floor += 1
+            elsif self.direction == "down" and self.floor > 1
+                self.floor -= 1
+            end
+            floor1 = (self.floor).to_s
+            direction1 = self.direction
+            puts "Elevator " + self.id + " is moving " + direction1 + " and is at floor " + floor1
+        end
+    end
+
+    def requestFloor()
+        puts "Select destination:"
+        n = gets.chomp
+        puts "You selected floor " + n
+        n = n.to_i
+        if (self.queue).length == 0
+            if self.floor > n
+                self.direction = "down"
+            elsif self.floor < n
+                self.direction = "up"
+            end
+        end
+        self.selected.push(n)
+    end
+
+    def checkFloor()
+        for item in self.queue
+            if self.floor == item
+                f = self.floor.to_s
+                puts "Elevator " + self.id + " arrived at floor " + f
+                self.open()
+                puts "Doors open"
+                puts "Waiting for people to get in and out..."
+                sleep(5)
+                puts "Doors are now closing"
+                self.close()
+                y = self.queue.index(item)
+                self.queue.delete_at(y)
+                self.requestFloor()
+            end
+        end
+        
+        for item in self.selected
+            if self.floor == item
+                puts "Elevator " + self.id + " arrived at it's destination"
+                self.open()
+                puts "Doors open"
+                puts "Waiting for people to get in and out..."
+                sleep(3)
+                puts "Doors are now closing"
+                self.close()
+                x = self.selected.index(item)
+                self.selected.delete_at(x)
+            end
+        end
+
+        if (self.queue).length == 0 and (self.selected).length == 0
+            self.direction = "idle"
+        end
+    end
+end
+      
+class Button
+    attr_accessor :floor, :direction
+    def initialize(floor, direction)
+        @floor = floor
+        @direction = direction
+    end
+    
+    def findDirection(a)
+        if a.floor > self.floor
+            a.direction = "down"
+        elsif a.floor < self.floor
+            a.direction = "up"
+        end
+    end
+    
+    def getClosest(a, b)
+        absA = (a.floor - self.floor).abs
+        absB = (b.floor - self.floor).abs
+        if absA > absB
+            b.queue.push(self.floor)
+            $calledButtons.pop()
+            puts "Elevator B is selected"
+            if b.floor - self.floor > 0
+                b.direction = "down"
+            elsif b.floor-self.floor < 0
+                b.direction = "up"
+            end
+        elsif absB > absA
+            a.queue.push(self.floor)
+            $calledButtons.pop()
+            puts "Elevator A is selected"
+            if a.floor - self.floor > 0
+                a.direction = "down"
+            elsif a.floor - self.floor < 0
+                a.direction = "up"
+            end
+        else
+            a.queue.push(self.floor)
+            $calledButtons.pop()
+            self.findDirection(a)
+            puts "Elevator A is selected"
+        end
+    end
+
+    def requestElevator()
+    
+        if $elevatorA.direction == "idle" and $elevatorB.direction == "idle"  #Both are idle
+            self.getClosest($elevatorA, $elevatorB)
+        elsif $elevatorA.direction != "idle" and $elevatorB.direction == "idle" #A is moving, B is idle
+            if self.direction == "up"
+                if $elevatorA.direction == "up" and self.floor > $elevatorA.floor
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                else
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                    self.findDirection(b)
+                end
+            else
+                if $elevatorA.direction == "down" and self.floor < $elevatorA.floor
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                else
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                    self.findDirection($elevatorB)
+                end
+            end
+        elsif $elevatorB.direction != "idle" and $elevatorA.direction == "idle" #B is moving, A is idle
+            if self.direction == "up"
+                if $elevatorB.direction == "up" and self.floor > $elevatorB.floor
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected "
+                    $calledButtons.pop()
+                else
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                    self.findDirection($elevatorA)
+                end
+            else
+                if $elevatorB.direction == "down" and self.floor < $elevatorB.floor
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                else
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                    self.findDirection($elevatorA)
+                end
+            end
+    
+        elsif $elevatorA.direction == "up" and $elevatorB.direction == "up" and self.direction == "up" #Both are going up and up call
+                if self.floor > $elevatorA.floor and self.floor > $elevatorB.floor
+                    self.getClosest($elevatorA, $elevatorB)
+                elsif self.floor > a.floor
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                elsif self.floor > $elevatorB.floor
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                end
+        elsif $elevatorA.direction == "down" and $elevatorB.direction == "down" and self.direction == "down" #Both are going down and down call
+            if self.floor < $elevatorA.floor and self.floor < $elevatorB.floor
+                self.getClosest($elevatorA, $elevatorB)
+            elsif self.floor < $elevatorA.floor
+                $elevatorA.queue.push(self.floor)
+                puts"Elevator A is selected"
+                $calledButtons.pop()
+            elsif self.floor < $elevatorB.floor
+                $elevatorB.queue.push(self.floor)
+                puts"Elevator B is selected"
+                $calledButtons.pop()
+            end
+        elsif $elevatorA.direction != "idle" and $elevatorB.direction != "idle" and $elevatorA.direction != $elevatorB.direction #Opposite direction
+            if self.direction == "up"
+                if $elevatorA.direction == "up" and self.floor > $elevatorA.floor
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                elsif $elevatorB.direction == "up" and self.floor > $elevatorB.floor
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                end
+            else
+                if $elevatorA.direction == "down" and self.floor < $elevatorA.floor
+                    $elevatorA.queue.push(self.floor)
+                    puts "Elevator A is selected"
+                    $calledButtons.pop()
+                elsif $elevatorB.direction == "down" and self.floor < $elevatorB.floor
+                    $elevatorB.queue.push(self.floor)
+                    puts "Elevator B is selected"
+                    $calledButtons.pop()
+                end
+            end
+        end
+    end
+    
+
+        def selectAtFloor()
+
+            puts "Select the floor you're at:"
+            self.floor = gets.chomp
+            puts "You are at floor" + self.floor
+            puts "Select which direction you are going:"
+            self.direction = gets.chomp
+            puts "You want to go" + self.direction
+            self.floor = self.floor.to_i
+                
+            $calledButtons.push(self)
+            self.requestElevator()
+        end
+end
+
+
+$calledButtons = Array.new
+
+$elevatorA = Elevator.new("A", 2, "idle", "closed")
+$elevatorB = Elevator.new("B", 6, "idle", "closed")
+$button = Button.new(1, "idle")
+$column = Array[$elevatorA, $elevatorB]
+
+def moveColumn()
+    for item in $column
+        if (item.queue).length == 0 and (item.selected).length == 0
+                item.direction = "idle"
+        end
+    end
+    for item in $column
+        item.move()
+        item.checkFloor()
+    end
+    for item in $calledButtons
+        item.requestElevator()
+    end
+end
+
+#Setting up the scenario
+
+def setup()
+    puts "We first need to setup the inital configurations"
+    puts "First choose Elevator A initial floor: "
+    i = gets.chomp
+    i = i.to_i
+    puts "Now select Elevator A initial direction:"
+    j = gets.chomp
+        if j != "idle"
+            puts "Select Elevator A destination: "
+            k = gets.chomp
+            k = k.to_i
+            $elevatorA.selected.push(k)
+        end
+    puts "Now select Elevator B initial floor: "
+    x = gets.chomp
+    x = x.to_i
+    puts "Select Elevator B initial direction:"
+    y = gets.chomp
+        if y != "idle"
+            puts "Select Elevator B destination:"
+            z = gets.chomp
+            z = z.to_i
+            $elevatorB.selected.push(z)
+        end
+    $elevatorA.floor = i
+    $elevatorB.floor = x
+    $elevatorA.direction = j
+    $elevatorB.direction = y
+    $button.selectAtFloor()
+end
+
+setup()
+
+variable = 1
+while variable == 1
+    while ($elevatorA.queue).length != 0 or ($elevatorA.selected).length != 0 or ($elevatorB.queue).length != 0 or ($elevatorB.selected).length != 0 
+        moveColumn()
+        sleep(1)
+    end
+
+    if ($elevatorA.queue).length == 0 and ($elevatorA.selected).length == 0 and ($elevatorB.queue).length == 0 and ($elevatorB.selected).length == 0
+
+        puts "Both elevators are now empty, waiting for another call"
+        $button.selectAtFloor()
+    end
+end
