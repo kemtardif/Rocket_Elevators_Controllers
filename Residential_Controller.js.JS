@@ -129,16 +129,17 @@ function Elevator (id, floor, direction, door, restFloor){
     };
 
     this.rest = function() {
+        var _this = this;
         setTimeout(function() {
-        if (this.floor != this.restFloor){
-            this.queue.push(this.restFloor);
-            x = (this.restFloor).toString();
-            console.log("Elevator " + this.id + " go back to rest floor " + x);
+        if (_this.floor != _this.restFloor){
+            _this.queue.push(_this.restFloor);
+            x = (_this.restFloor).toString();
+            console.log("Elevator " + _this.id + " go back to rest floor " + x);
 
-            if (this.floor > this.restFloor){
-                this.direction = "down";
+            if (_this.floor > _this.restFloor){
+                _this.direction = "down";
              } else {
-                this.direction = "up";
+                _this.direction = "up";
             }
          }
     }, 3000);
