@@ -69,7 +69,8 @@ function Elevator (id, floor, direction, door, restFloor){
             this.capacity += z;
             a = (this.capacity).toString();
             console.log("Waiting for people to get in ...");
-            //Sleep for 5 seconds
+            var now = new Date().getTime();
+            while(new Date().getTime() < now + 1000){}
             console.log("There is now " + a + " person inside");
             console.log("Doors are closing");
             this.close();
@@ -95,7 +96,8 @@ function Elevator (id, floor, direction, door, restFloor){
             this.capacity -= z1;
             a1 = (this.capacity).toString();
             console.log("Waiting for people to get out ...");
-            //Sleep for 5 seconds
+            var now = new Date().getTime();
+            while(new Date().getTime() < now + 1000){}
             console.log("There is now " + a1 + " person inside");
             console.log("Doors are now closing");
             this.close();
@@ -357,6 +359,8 @@ function Controller() {
         
             for(var i = 0; i < (this.column).length; i++) {
                 this.column[i].move();
+                var now = new Date().getTime();
+                while(new Date().getTime() < now + 1000){}
                 this.column[i].checkFloor();
             }
         
