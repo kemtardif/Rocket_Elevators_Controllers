@@ -107,7 +107,7 @@ class Elevator:
         if len(self.queue) == 0 and len(self.selected) == 0:  #Set rest floor after some time
             self.direction = "idle"                        
             #if self.floor != self.restFloor and self.capacity == 0:
-                #threading.Timer(30, self.rest())
+                #threading.Timer(10, self.rest())
             if self.capacity != 0:                              # Check for people still in elevator
                 print("Elevator " + self.id + " has no more calls, but there's still people inside!")
                 print("Where do they wanna go?")
