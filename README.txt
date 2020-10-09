@@ -1,12 +1,17 @@
-The user interface is opened by running any of the three files on the console.
-All three are functionnal.
-The JS script is run using node, with the module 'promt-sync'.
-You will need to input the initial configuration for the scenario you wanna try.
-Any configuration is functional. The elevators floor and destination are integers,
-And directions are idle/up/down. Capacity is integer between zero and 15, but feel free to try
-negative number or >15.
-The perl Residential Controller file is in the repo https://github.com/kemtardif/Rocket_Elevators_Controllers.git.
-The repo include a file named 'lib', whih are the packages for the Controller and Elevator classes. It is not 
-functionnal, but since I spent a day on it, it's still there :) Thank you!
+All three controllers has interface working on the console.
 
+Both the c# and go code include various additional requirements,
+including making the elevators move and a capacity management for 
+each elevators, just like I did last week. The interface will let you choose
+the initial scenario that you want to try. 
+Those codes are dynamic for the # of floors, basements, columns and elevator per column, you just have to
+change these numbers when instantiating a controller. They are set to those required
+for the scenario you gave us, but feel free to change them. The number of elevators deserved by each column
+ is found by dividing topFloor/columns. If the modulo is not zero, the remaining floors are deserved by the top column.
+One column deserve the basements. 
 
+The JAVA code is simpler, but work as intended. You type in which scenario you want and it spits ou the selected elevator.
+I didn't get the time to do like the other two, but it does what is asked!
+THe code is located in src folder, in the java folder.
+
+Thank you!

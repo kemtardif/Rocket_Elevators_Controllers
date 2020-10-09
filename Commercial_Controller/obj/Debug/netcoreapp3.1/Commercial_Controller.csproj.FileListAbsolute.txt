@@ -1,0 +1,13 @@
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.exe
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.deps.json
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.runtimeconfig.json
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.runtimeconfig.dev.json
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.dll
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\bin\Debug\netcoreapp3.1\Commercial_Controller.pdb
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.csprojAssemblyReference.cache
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.AssemblyInfoInputs.cache
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.AssemblyInfo.cs
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.csproj.CoreCompileInputs.cache
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.dll
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.pdb
+C:\Users\tardi\Desktop\Algorithms\Commercial_Controller\obj\Debug\netcoreapp3.1\Commercial_Controller.genruntimeconfig.cache

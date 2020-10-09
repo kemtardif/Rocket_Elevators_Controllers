@@ -1,6 +1,7 @@
 const prompt = require('prompt-sync')();
 
 //////TO RUN THE SCENARIOS, USE NODE WITH THE EXTENSION prompt-sync THANK YOU////////
+///The rest function is there, but I couldn't get it to work properly//////
 // Define Objects
 
 function Elevator (id, floor, direction, door, restFloor){

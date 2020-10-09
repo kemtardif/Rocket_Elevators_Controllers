@@ -1,8 +1,7 @@
 # Define Objects
 
 #Note that sometimes this python file doesn't work on VS code terminal "Run python on terminal"
-#Most of the time, it does. But if not, just try again.
-#It also works perfect in Debug Mode and on the computer console
+#The rest function is there, but I couldn't get it to run properly/////
 #From what I gathered on the intertrons, this might be a problem with VS code. Thank you.
 
 import time 
