@@ -14,4 +14,6 @@ The JAVA code is simpler, but work as intended. You type in which scenario you w
 I didn't get the time to do like the other two, but it does what is asked!
 THe code is located in src folder, in the java folder.
 
+All comments are made in the c# file.
+
 Thank you!
