@@ -9,10 +9,12 @@ change these numbers when instantiating a controller. They are set to those requ
 for the scenario you gave us, but feel free to change them. The number of elevators deserved by each column
  is found by dividing topFloor/columns. If the modulo is not zero, the remaining floors are deserved by the top column.
 One column deserve the basements. 
+AS you will notice, all elevators going down, say from 34 to 30, will then continue their way to RC. It is part of the algorithm, 
+that all calls made at floor finish their way at RC.
 
 The JAVA code is simpler, but work as intended. You type in which scenario you want and it spits ou the selected elevator.
 I didn't get the time to do like the other two, but it does what is asked!
-THe code is located in src folder, in the java folder.
+THe code is located in src folder, in the java folder. You run the Main.java file on console by being in the src folder.
 
 All comments are made in the c# file.
 
